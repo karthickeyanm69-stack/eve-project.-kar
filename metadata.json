@@ -1,0 +1,6 @@
+{
+  "name": "EVE - AI Coding Platform",
+  "description": "Elevated Virtual Education (EVE) - Gamified AI Professional Coding, Aptitude, & Interview Prep platform.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
