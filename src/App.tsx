@@ -381,8 +381,7 @@ export default function App() {
                 activeCourse={activeCourse}
                 onNavigate={(selected) => setTab(selected)}
                 onContinueCourse={() => {
-                  setTab('practice');
-                  setSubPractice('compiler');
+                  setTab('learn');
                 }}
                 onToggleGoal={handleToggleGoal}
                 goals={goals}

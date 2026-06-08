@@ -293,6 +293,68 @@ Generate constructive feedback and the next question using the required structur
   }
 });
 
+// Endpoint: AI Analogy Helper
+app.post('/api/gemini/analogy', async (req, res) => {
+  const { concept, language } = req.body;
+  if (!concept) {
+    return res.status(400).json({ error: 'Concept name is required.' });
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) {
+    // Elegant fallbacks matching the interactive course session concepts
+    const fallbackAnalogies: Record<string, string> = {
+      'variables': `Imagine a **Variable** as a **labeled storage lock-box**.
+- In your ship's system panel, writing \`const pilotName = "EVE"\` buys a highly durable, armored titanium box, labels it **"pilotName"**, and places a titanium tag with **"EVE"** on it. Because lock-boxes are declared with \`const\`, they are soldered shut! You can view the name, but you can never swap it out.
+- Writing \`let energyLevel = 100\` is like a glowing power containment cell named **"energyLevel"** with an adjustable screen. Whenever your thrusters fire, you can slide the energy counter down to **95** or **50** directly!`,
+
+      'operators': `Imagine **Operators** as the **kinetic power couplers** in your hyperdrive:
+- Arithmetic operators (\`+\`, \`-\`, \`*\`, \`/\`) dial the power cells up, drain secondary fuel grids, or divide laser beams equally.
+- Exponential / Power (\`**\`) triggers cascading thrust, multiplying variables iteratively to lift altitude.
+- The modulo operator (\`%\`) checks if regular pulses align. Like checking if every 3rd step matches a secure sensor sweep, allowing your scanner to block virus entries.`,
+
+      'control flow': `Imagine **Control Flow** as a **railway track-switcher** at a junction.
+Your logic train glides along the rail tracks. When it approaches an \`if\` condition, a sensor checks if the upcoming bridge is lowered:
+- If lowered (\`bridge_active === true\`), the tracks hold steady and your logic train rolls directly to the main destination.
+- Else if the emergency energy level is high (\`energy > 20\`), the switcher is triggered mechanically, sending you down the auxiliary power tunnel.
+- Else, the switcher diverts the train into a safety emergency brake depot to avoid a total system crash!`,
+
+      'loops': `Imagine a **Loop** as an **orbital sweep** around a foreign warp beacon.
+Rather than commanding your ship 10 times to: "Activate sensor sweep!", you initiate a systematic loop count (\`for i in range(10)\`).
+Each loop circles the orbit once. On each lap, your system clicks the scanner probe and records the scan logs along with the lap number. When the 10 laps are complete, the thrusters level out and your ship launches forward into light speed!`,
+
+      'functions': `Imagine a **Function** as a **vending recipe blueprint** in your starship's galley.
+Instead of manually wiring a system of heaters, filters, and mixers every single time you want a warm cup of synth-tea, you install a recipe panel named \`brew_tea(sweetness_level)\`.
+Whenever you feel fatigued, you don't rewire the kitchen; you simply press the button and pass in the value \`2\`. The machine processes the instructions internally and pops out a perfect warm cup!`,
+
+      'collections': `Imagine **Collections (Lists/Arrays)** as a **multi-car freight train** in your cargo deck.
+Rather than setting up 12 different storage containers with isolated names like \`crate1\`, \`crate2\`, or \`crate3\`, you bind them into a single cargo link named \`cargo_bay = ["nano-bots", "aux-shield", "plasma-fuel"]\`.
+Each drawer is indexed by number. The first drawer (\`cargo_bay[0]\`) slides open to reveal the nano-bots instantly, letting your repair droids work with clean structures!`
+    };
+
+    const term = concept.toLowerCase().trim();
+    // find key that matches or is included
+    const matchedKey = Object.keys(fallbackAnalogies).find(k => term.includes(k) || k.includes(term));
+    const analogy = matchedKey ? fallbackAnalogies[matchedKey] : `Imagine **${concept}** as a custom subsystem module in your space terminal. It takes input pulses, checks parameters with internal logic gates, and outputs clean solutions back to the viewport sandbox safely.`;
+    
+    return res.json({ analogy });
+  }
+
+  try {
+    const ai = getGeminiClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: `Explain the programming concept "${concept}" in ${language || 'Python'} from the perspective of EVE's stylized robotic mentor guide EVA.
+      Provide a highly immersive, narrative-driven, and simple physical world analogy (e.g. using spaceship mechanics, cyberware systems, gothic folklore shrines, or high-tech gadget containers) that helps a complete beginner grasp the core mechanics. Make it 2 concise paragraphs with clear bold highlights. Skip introductory pleasantries and start directly with the narrative layout or "Imagine..."`,
+    });
+    return res.json({
+      analogy: response.text || 'No analogy could be rendered right now.'
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve frontend build static files & mount Vite middleware
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
